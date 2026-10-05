@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1E6B57">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Agenda">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>Mi Agenda Diaria</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Figtree:wght@400;500;600&display=swap">
+<style>
+html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+[hidden]{display:none!important}
+.backup{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.backup button,.backup label{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:6px 12px;font-size:.82rem;cursor:pointer}
+.backup input{display:none}
+
+/* Layout: una columna tipo libreta, encabezado con el día, captura rápida arriba y lista de tareas abajo */
+:root{
+  --bg:#EEF2EF; --card:#FFFFFF; --ink:#18231E; --muted:#5F6E66; --line:#D6DFD9;
+  --accent:#1E6B57; --accent-ink:#FFFFFF; --late:#B4441F; --soft:#E3EBE6;
+  --c-personal:#7A4FB5; --c-familia:#C2410C; --c-estudios:#1D5FB8; --c-yemas:#B7860B; --c-trabajo:#1E6B57;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Figtree", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#111814; --card:#19221D; --ink:#E6EEE9; --muted:#97A69E; --line:#2B3731;
+  --accent:#4FB596; --accent-ink:#0D1511; --late:#F08A62; --soft:#212C26;
+  --c-personal:#B79AE6; --c-familia:#F59A68; --c-estudios:#7FB0F2; --c-yemas:#E7C24F; --c-trabajo:#4FB596;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111814; --card:#19221D; --ink:#E6EEE9; --muted:#97A69E; --line:#2B3731;
+  --accent:#4FB596; --accent-ink:#0D1511; --late:#F08A62; --soft:#212C26;
+  --c-personal:#B79AE6; --c-familia:#F59A68; --c-estudios:#7FB0F2; --c-yemas:#E7C24F; --c-trabajo:#4FB596;
+  color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45}
+.wrap{max-width:620px;margin:0 auto;padding-inline:16px;padding-block:20px 48px;display:flex;flex-direction:column;gap:18px}
+header{display:flex;flex-direction:column;gap:10px}
+.dayrow{display:flex;align-items:center;gap:8px}
+.dayrow h1{font-family:var(--f-display);font-weight:700;font-size:1.9rem;line-height:1.1;margin:0;flex:1;text-wrap:balance;text-transform:capitalize}
+.sub{color:var(--muted);font-size:.9rem;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+button{font:inherit;color:inherit;cursor:pointer}
+.nav{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--card);display:grid;place-items:center;font-size:1.1rem}
+.today-btn{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:4px 12px;font-size:.85rem}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.bar{height:6px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+form.add{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:10px}
+form.add input[type=text]{width:100%;border:0;background:transparent;font:inherit;font-size:1.05rem;color:var(--ink);padding:4px 2px}
+form.add input[type=text]::placeholder{color:var(--muted)}
+.opts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.opts select,.opts input{font:inherit;font-size:.88rem;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:8px;padding:6px 8px}
+.opts .go{margin-left:auto;background:var(--accent);color:var(--accent-ink);border:0;border-radius:8px;padding:7px 16px;font-weight:600}
+.filters{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:transparent;border-radius:999px;padding:4px 11px;font-size:.82rem;display:inline-flex;align-items:center;gap:6px}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--c)}
+h2{font-family:var(--f-display);font-weight:600;font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:6px 0 0}
+ul.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+li.task{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;gap:12px;align-items:flex-start}
+.check{flex:none;width:24px;height:24px;border-radius:50%;border:2px solid var(--c);background:transparent;display:grid;place-items:center;margin-top:1px;color:var(--accent-ink)}
+li.done .check{background:var(--c)}
+li.done .check::after{content:"✓";font-size:.8rem;font-weight:700;color:var(--card)}
+.body{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.t{font-weight:500;overflow-wrap:anywhere}
+li.done .t{text-decoration:line-through;color:var(--muted)}
+.meta{display:flex;gap:8px;flex-wrap:wrap;font-size:.78rem;color:var(--muted);align-items:center;font-variant-numeric:tabular-nums}
+.tag{color:var(--c);font-weight:600}
+.late{color:var(--late);font-weight:600}
+.acts{display:flex;gap:2px;flex:none}
+.acts button{border:0;background:transparent;color:var(--muted);font-size:.78rem;padding:4px 6px;border-radius:6px}
+.acts button:hover{background:var(--soft);color:var(--ink)}
+.empty{color:var(--muted);text-align:center;padding:22px 12px;border:1px dashed var(--line);border-radius:12px}
+.status{font-size:.78rem;color:var(--muted)}
+@media (prefers-reduced-motion: reduce){.bar i{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="dayrow">
+      <button class="nav" id="prev" aria-label="Día anterior">‹</button>
+      <h1 id="dayTitle">Hoy</h1>
+      <button class="nav" id="next" aria-label="Día siguiente">›</button>
+    </div>
+    <div class="sub">
+      <span id="dayDate"></span>
+      <button class="today-btn" id="goToday" hidden>Volver a hoy</button>
+      <span id="count"></span>
+    </div>
+    <div class="bar"><i id="barFill"></i></div>
+  </header>
+
+  <form class="add" id="addForm" autocomplete="off">
+    <input type="text" id="newTitle" placeholder="Nueva tarea… ej. Llamar a Santo Tomás" aria-label="Nueva tarea">
+    <div class="opts">
+      <select id="newArea" aria-label="Área"></select>
+      <input type="time" id="newTime" aria-label="Hora (opcional)">
+      <input type="date" id="newDate" aria-label="Fecha">
+      <button class="go" type="submit">Agregar</button>
+    </div>
+  </form>
+
+  <div class="filters" id="filters"></div>
+
+  <section id="lists"></section>
+  <div class="backup">
+    <button type="button" id="exportBtn">Descargar respaldo</button>
+    <label for="importFile">Cargar respaldo</label>
+    <input type="file" id="importFile" accept="application/json,.json">
+  </div>
+  <p class="status" id="status"></p>
+</div>
+
+<script>
+const AREAS = {
+  personal:  {label:"Personal",     c:"var(--c-personal)", tipo:"Personal"},
+  familia:   {label:"Familia",      c:"var(--c-familia)",  tipo:"Personal"},
+  estudios:  {label:"Estudios",     c:"var(--c-estudios)", tipo:"Personal"},
+  yemas:     {label:"Las 3 Yemas",  c:"var(--c-yemas)",    tipo:"Profesional"},
+  trabajo:   {label:"Trabajo",      c:"var(--c-trabajo)",  tipo:"Profesional"},
+};
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2,"0");
+const iso = d => d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+const parse = s => { const [y,m,d] = s.split("-").map(Number); return new Date(y,m-1,d); };
+const todayISO = () => iso(new Date());
+
+let day = todayISO();
+let filter = "todas";
+let tasks = [];          // {id,titulo,area,fecha,hora,hecha}
+let store = null;        // db collection or null
+const LS = "agenda-diaria-v1";
+
+// ---------- almacenamiento ----------
+function lsLoad(){ try{ return JSON.parse(localStorage.getItem(LS)) || []; }catch(e){ return []; } }
+function lsSave(){ try{ localStorage.setItem(LS, JSON.stringify(tasks)); }catch(e){} }
+
+async function saveTask(t){
+  if(store){ const {id, ...body} = t; await store.doc(id).set(body); }
+  else { lsSave(); render(); }
+}
+async function removeTask(id){
+  if(store){ await store.doc(id).delete(); }
+  else { tasks = tasks.filter(t=>t.id!==id); lsSave(); render(); }
+}
+function newId(){ return "t" + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+// ---------- render ----------
+function fmtDay(s){
+  const d = parse(s), t = todayISO();
+  const diff = Math.round((d - parse(t))/86400000);
+  const name = d.toLocaleDateString("es-CL",{weekday:"long"});
+  const title = diff===0 ? "Hoy, "+name : diff===1 ? "Mañana, "+name : diff===-1 ? "Ayer, "+name : name;
+  return {title, date: d.toLocaleDateString("es-CL",{day:"numeric",month:"long",year:"numeric"})};
+}
+
+function render(){
+  const f = fmtDay(day);
+  $("dayTitle").textContent = f.title;
+  $("dayDate").textContent = f.date;
+  $("goToday").hidden = day === todayISO();
+  $("newDate").value = day;
+
+  const match = t => filter==="todas" || (filter==="Personal"||filter==="Profesional" ? AREAS[t.area]?.tipo===filter : t.area===filter);
+  const byTime = (a,b) => (a.hora||"99").localeCompare(b.hora||"99") || (a.creado||0)-(b.creado||0);
+
+  const isToday = day === todayISO();
+  const late = isToday ? tasks.filter(t=>!t.hecha && t.fecha < day && match(t)).sort((a,b)=>a.fecha.localeCompare(b.fecha)) : [];
+  const ofDay = tasks.filter(t=>t.fecha===day && match(t));
+  const pend = ofDay.filter(t=>!t.hecha).sort(byTime);
+  const done = ofDay.filter(t=>t.hecha).sort(byTime);
+
+  const total = ofDay.length;
+  $("count").textContent = total ? `${done.length} de ${total} listas` : "";
+  $("barFill").style.width = total ? (done.length/total*100)+"%" : "0";
+
+  const box = $("lists"); box.innerHTML = "";
+  if(late.length) box.append(section("Atrasadas", late, true));
+  if(pend.length) box.append(section("Por hacer", pend));
+  if(done.length) box.append(section("Hechas", done));
+  if(!late.length && !pend.length && !done.length){
+    const p = document.createElement("p"); p.className="empty";
+    p.textContent = filter==="todas" ? "No hay tareas para este día. Escribe una arriba y presiona Agregar." : "No hay tareas de esta área para este día.";
+    box.append(p);
+  }
+}
+
+function section(title, list, isLate){
+  const s = document.createElement("div");
+  s.style.cssText = "display:flex;flex-direction:column;gap:8px;margin-bottom:12px";
+  const h = document.createElement("h2"); h.textContent = title + " · " + list.length; s.append(h);
+  const ul = document.createElement("ul"); ul.className = "list";
+  list.forEach(t => ul.append(row(t, isLate)));
+  s.append(ul); return s;
+}
+
+function row(t, isLate){
+  const a = AREAS[t.area] || AREAS.personal;
+  const li = document.createElement("li");
+  li.className = "task" + (t.hecha ? " done" : "");
+  li.style.setProperty("--c", a.c);
+
+  const ck = document.createElement("button");
+  ck.className = "check"; ck.setAttribute("aria-label", t.hecha ? "Marcar como pendiente" : "Marcar como hecha");
+  ck.onclick = () => { t.hecha = !t.hecha; saveTask(t); if(!store) render(); };
+
+  const body = document.createElement("div"); body.className = "body";
+  const tt = document.createElement("span"); tt.className = "t"; tt.textContent = t.titulo;
+  const meta = document.createElement("div"); meta.className = "meta";
+  const tag = document.createElement("span"); tag.className = "tag"; tag.textContent = a.label; meta.append(tag);
+  const tipo = document.createElement("span"); tipo.textContent = a.tipo; meta.append(tipo);
+  if(t.hora){ const h = document.createElement("span"); h.textContent = t.hora + " h"; meta.append(h); }
+  if(isLate){ const l = document.createElement("span"); l.className = "late";
+    l.textContent = "desde el " + parse(t.fecha).toLocaleDateString("es-CL",{day:"numeric",month:"short"}); meta.append(l); }
+  body.append(tt, meta);
+
+  const acts = document.createElement("div"); acts.className = "acts";
+  if(!t.hecha){
+    const mv = document.createElement("button");
+    if(isLate){ mv.textContent = "A hoy"; mv.onclick = () => { t.fecha = todayISO(); saveTask(t); }; }
+    else { mv.textContent = "Mañana"; mv.title = "Pasar al día siguiente";
+      mv.onclick = () => { const d = parse(t.fecha); d.setDate(d.getDate()+1); t.fecha = iso(d); saveTask(t); }; }
+    acts.append(mv);
+  }
+  const del = document.createElement("button"); del.textContent = "Borrar";
+  let armed = false;
+  del.onclick = () => { if(!armed){ armed = true; del.textContent = "¿Seguro?"; del.style.color = "var(--late)";
+      setTimeout(()=>{ armed=false; del.textContent="Borrar"; del.style.color=""; }, 3000); return; }
+    removeTask(t.id); };
+  acts.append(del);
+
+  li.append(ck, body, acts);
+  return li;
+}
+
+function buildControls(){
+  const sel = $("newArea");
+  Object.entries(AREAS).forEach(([k,a]) => { const o = document.createElement("option"); o.value = k; o.textContent = a.label + " (" + a.tipo.toLowerCase() + ")"; sel.append(o); });
+  const fl = $("filters");
+  const opts = [["todas","Todas",null],["Personal","Personal",null],["Profesional","Profesional",null],
+    ...Object.entries(AREAS).map(([k,a])=>[k,a.label,a.c])];
+  opts.forEach(([k,label,c]) => {
+    const b = document.createElement("button"); b.className = "chip"; b.type = "button";
+    b.setAttribute("aria-pressed", k===filter);
+    if(c){ const d = document.createElement("span"); d.className="dot"; d.style.setProperty("--c", c); b.append(d); }
+    b.append(label);
+    b.onclick = () => { filter = k; fl.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed", x===b)); render(); };
+    fl.append(b);
+  });
+}
+
+$("prev").onclick = () => { const d = parse(day); d.setDate(d.getDate()-1); day = iso(d); render(); };
+$("next").onclick = () => { const d = parse(day); d.setDate(d.getDate()+1); day = iso(d); render(); };
+$("goToday").onclick = () => { day = todayISO(); render(); };
+$("addForm").addEventListener("submit", e => {
+  e.preventDefault();
+  const titulo = $("newTitle").value.trim(); if(!titulo) return;
+  const t = { id:newId(), titulo, area:$("newArea").value, fecha:$("newDate").value || day,
+              hora:$("newTime").value || "", hecha:false, creado:Date.now() };
+  if(!store) tasks.push(t);
+  saveTask(t);
+  $("newTitle").value = ""; $("newTime").value = ""; $("newTitle").focus();
+});
+
+buildControls();
+tasks = lsLoad();
+render();
+
+// Primera vez: tareas iniciales
+try{
+  if(localStorage.getItem(LS) === null){
+    tasks = [
+      {id:"t-santotomas", titulo:"Postulación Santo Tomás", area:"estudios", fecha:"2026-10-05", hora:"", hecha:false, creado:1},
+      {id:"t-cfc", titulo:"CFC Católica: inicio de clases", area:"estudios", fecha:"2026-10-05", hora:"", hecha:false, creado:2},
+      {id:"t-horas", titulo:"Pedir horas para papá y mamá", area:"familia", fecha:"2026-10-05", hora:"", hecha:false, creado:3},
+      {id:"t-arizona", titulo:"Ver Arizona por Las 3 Yemas", area:"yemas", fecha:"2026-10-05", hora:"", hecha:false, creado:4},
+    ];
+    lsSave(); render();
+  }
+}catch(e){}
+$("status").textContent = "Tus tareas se guardan en este aparato. Descarga un respaldo de vez en cuando.";
+
+$("exportBtn").onclick = () => {
+  const blob = new Blob([JSON.stringify(tasks, null, 2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "agenda-respaldo-" + todayISO() + ".json";
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+};
+$("importFile").onchange = async e => {
+  const f = e.target.files[0]; if(!f) return;
+  try{
+    const data = JSON.parse(await f.text());
+    if(!Array.isArray(data)) throw 0;
+    const byId = new Map(tasks.map(t=>[t.id,t]));
+    data.forEach(t => { if(t && t.id && t.titulo) byId.set(t.id, t); });
+    tasks = [...byId.values()]; lsSave(); render();
+    $("status").textContent = "Respaldo cargado: " + data.length + " tareas.";
+  }catch(err){ $("status").textContent = "Ese archivo no es un respaldo de la agenda."; }
+  e.target.value = "";
+};
+
+if("serviceWorker" in navigator && location.protocol.startsWith("http")){
+  navigator.serviceWorker.register("sw.js").catch(()=>{});
+}
+</script>
+
+</body>
+</html>
